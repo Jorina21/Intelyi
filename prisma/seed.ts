@@ -1,8 +1,19 @@
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 
-const prisma = new PrismaClient();
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  const existing = await prisma.product.count();
+  if (existing > 0) {
+    console.log(`Seed skipped: Product table already has ${existing} rows.`);
+    return;
+  }
+
   await prisma.product.create({
     data: {
       title: "Basic Hoodie",
@@ -21,12 +32,16 @@ async function main() {
       },
     },
   });
+
+  console.log("Seed complete: created 1 product.");
 }
 
 main()
-  .then(() => prisma.$disconnect())
-  .catch(async (e) => {
-    console.error(e);
-    await prisma.$disconnect();
+  .catch((e) => {
+    console.error("Seed failed:", e);
     process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+    await pool.end();
   });
