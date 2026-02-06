@@ -1,22 +1,21 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
-import { Pool, neonConfig } from "@neondatabase/serverless";
-import * as ws from "ws";
-
-neonConfig.webSocketConstructor = ws as any;
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("DATABASE_URL is missing. Check .env and restart the dev server.");
+}
+
 export const prisma =
   globalForPrisma.prisma ??
   (() => {
-    const pool = new Pool({
-      connectionString: process.env.DATABASE_URL!,
-    });
-
-    const adapter = new PrismaNeon(pool);
+    // ✅ PrismaNeon expects config, not a Pool instance
+    const adapter = new PrismaNeon({ connectionString });
     return new PrismaClient({ adapter });
   })();
 
