@@ -19,12 +19,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const form = await req.formData();
-  const title = String(form.get("title") ?? "");
-  const description = String(form.get("description") ?? "");
-  const category = String(form.get("category") ?? "OTHER");
-  const price = Number(form.get("price") ?? 0);
-  const stockQty = Number(form.get("stockQty") ?? 0);
+  const body = await req.json().catch(() => null);
+  const title = String(body?.title ?? "");
+  const description = String(body?.description ?? "");
+  const category = String(body?.category ?? "OTHER");
+  const price = Number(body?.price ?? 0);
+  const stockQty = Number(body?.stockQty ?? 0);
+  const status = String(body?.status ?? "ACTIVE");
 
   if (!title || !description || !Number.isFinite(price)) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
@@ -39,9 +40,9 @@ export async function POST(req: Request) {
       category: category as any,
       priceCents,
       stockQty,
-      status: "ACTIVE",
+      status: status as any,
     },
   });
 
-  return NextResponse.redirect(new URL(`/products/${product.id}`, req.url));
+  return NextResponse.json({ id: product.id });
 }

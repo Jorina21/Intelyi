@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -89,6 +90,7 @@ model ProductImage {
   id        String   @id @default(cuid())
   productId String
   url       String
+  publicId  String?
   alt       String?
   sortOrder Int      @default(0)
 
@@ -96,4 +98,3 @@ model ProductImage {
 
   createdAt DateTime @default(now())
 }
-

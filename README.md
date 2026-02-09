@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Intelyi
+
+Intelyi is a full-stack e-commerce platform with an AI-driven merchandising engine. The storefront is the interface; the system learns from user behavior to personalize rankings, build bundles, and optimize promotions over time.
+
+## Tech Stack
+
+- Next.js (App Router) + TypeScript
+- Prisma + Neon Postgres
+- NextAuth (GitHub provider)
 
 ## Getting Started
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+1. Install dependencies.
+```
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Set environment variables in `.env`.
+```
+DATABASE_URL='your-neon-connection-string'
+NEXTAUTH_URL='http://localhost:3000'
+NEXTAUTH_SECRET='replace-with-a-long-random-string'
+GITHUB_ID='replace-with-github-oauth-client-id'
+GITHUB_SECRET='replace-with-github-oauth-client-secret'
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Generate Prisma client and run migrations (if applicable).
+```
+npx prisma generate
+npx prisma migrate dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Start the dev server.
+```
+npm run dev
+```
 
-## Learn More
+Open `http://localhost:3000`.
 
-To learn more about Next.js, take a look at the following resources:
+## Notes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Auth is configured at `src/app/api/auth/[...nextauth]/route.ts`.
+- Prisma uses the Neon adapter in `src/lib/prisma.ts`.
+- Product seed script: `prisma/seed.ts`.
