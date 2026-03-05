@@ -3,10 +3,11 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-export async function PATCH(
-  req: Request,
-  context: { params: { id: string } }
-) {
+type RouteContext = {
+  params: Promise<{ id: string }>;
+};
+
+async function ensureAdmin() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.email) {
@@ -22,57 +23,63 @@ export async function PATCH(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json().catch(() => null);
-  const title = String(body?.title ?? "");
-  const description = String(body?.description ?? "");
-  const category = String(body?.category ?? "OTHER");
-  const price = Number(body?.price ?? 0);
-  const stockQty = Number(body?.stockQty ?? 0);
-  const status = String(body?.status ?? "ACTIVE");
-
-  if (!title || !description || !Number.isFinite(price)) {
-    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
-  }
-
-  const priceCents = Math.round(price * 100);
-
-  await prisma.product.update({
-    where: { id: context.params.id },
-    data: {
-      title,
-      description,
-      category: category as any,
-      priceCents,
-      stockQty,
-      status: status as any,
-    },
-  });
-
-  return NextResponse.json({ ok: true });
+  return null;
 }
 
-export async function DELETE(
-  _req: Request,
-  context: { params: { id: string } }
-) {
-  const session = await getServerSession(authOptions);
+function getFastApiBaseUrl() {
+  const fastApiBaseUrl = process.env.FASTAPI_BASE_URL;
 
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!fastApiBaseUrl) {
+    return NextResponse.json(
+      { error: "FASTAPI_BASE_URL is not configured" },
+      { status: 500 }
+    );
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-    select: { isAdmin: true },
+  return fastApiBaseUrl;
+}
+
+export async function PUT(req: Request, context: RouteContext) {
+  const authError = await ensureAdmin();
+  if (authError) return authError;
+
+  const fastApiBaseUrl = getFastApiBaseUrl();
+  if (fastApiBaseUrl instanceof NextResponse) return fastApiBaseUrl;
+
+  const { id } = await context.params;
+  const body = await req.text();
+  const response = await fetch(`${fastApiBaseUrl}/admin/products/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body,
   });
 
-  if (!user?.isAdmin) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  return new NextResponse(response.body, {
+    status: response.status,
+    headers: {
+      "Content-Type": response.headers.get("content-type") ?? "application/json",
+    },
+  });
+}
 
-  await prisma.product.delete({
-    where: { id: context.params.id },
+export async function DELETE(_req: Request, context: RouteContext) {
+  const authError = await ensureAdmin();
+  if (authError) return authError;
+
+  const fastApiBaseUrl = getFastApiBaseUrl();
+  if (fastApiBaseUrl instanceof NextResponse) return fastApiBaseUrl;
+
+  const { id } = await context.params;
+  const response = await fetch(`${fastApiBaseUrl}/admin/products/${id}`, {
+    method: "DELETE",
   });
 
-  return NextResponse.json({ ok: true });
+  return new NextResponse(response.body, {
+    status: response.status,
+    headers: {
+      "Content-Type": response.headers.get("content-type") ?? "application/json",
+    },
+  });
 }

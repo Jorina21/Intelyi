@@ -70,7 +70,7 @@ export default function ProductForm({ mode, product }: ProductFormProps) {
       const res = await fetch(
         mode === "create" ? "/api/admin/products" : `/api/admin/products/${product?.id}`,
         {
-          method: mode === "create" ? "POST" : "PATCH",
+          method: mode === "create" ? "POST" : "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         }

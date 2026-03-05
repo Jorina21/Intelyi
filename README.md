@@ -22,6 +22,7 @@ NEXTAUTH_URL='http://localhost:3000'
 NEXTAUTH_SECRET='replace-with-a-long-random-string'
 GITHUB_ID='replace-with-github-oauth-client-id'
 GITHUB_SECRET='replace-with-github-oauth-client-secret'
+FASTAPI_BASE_URL='http://localhost:8000'
 ```
 
 3. Generate Prisma client and run migrations (if applicable).
@@ -41,4 +42,8 @@ Open `http://localhost:3000`.
 
 - Auth is configured at `src/app/api/auth/[...nextauth]/route.ts`.
 - Prisma uses the Neon adapter in `src/lib/prisma.ts`.
+- Admin product routes in Next.js are thin proxies to FastAPI:
+  - `POST /api/admin/products` -> `${FASTAPI_BASE_URL}/admin/products`
+  - `PUT/DELETE /api/admin/products/:id` -> `${FASTAPI_BASE_URL}/admin/products/:id`
+  - `POST /api/admin/products/upload` -> `${FASTAPI_BASE_URL}/admin/products/upload`
 - Product seed script: `prisma/seed.ts`.

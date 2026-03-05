@@ -19,30 +19,27 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json().catch(() => null);
-  const title = String(body?.title ?? "");
-  const description = String(body?.description ?? "");
-  const category = String(body?.category ?? "OTHER");
-  const price = Number(body?.price ?? 0);
-  const stockQty = Number(body?.stockQty ?? 0);
-  const status = String(body?.status ?? "ACTIVE");
-
-  if (!title || !description || !Number.isFinite(price)) {
-    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+  const fastApiBaseUrl = process.env.FASTAPI_BASE_URL;
+  if (!fastApiBaseUrl) {
+    return NextResponse.json(
+      { error: "FASTAPI_BASE_URL is not configured" },
+      { status: 500 }
+    );
   }
 
-  const priceCents = Math.round(price * 100);
-
-  const product = await prisma.product.create({
-    data: {
-      title,
-      description,
-      category: category as any,
-      priceCents,
-      stockQty,
-      status: status as any,
+  const body = await req.text();
+  const response = await fetch(`${fastApiBaseUrl}/admin/products`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
     },
+    body,
   });
 
-  return NextResponse.json({ id: product.id });
+  return new NextResponse(response.body, {
+    status: response.status,
+    headers: {
+      "Content-Type": response.headers.get("content-type") ?? "application/json",
+    },
+  });
 }
