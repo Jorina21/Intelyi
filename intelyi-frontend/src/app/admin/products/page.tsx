@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { fetchPublicProducts } from "@/lib/fastapi";
 
 export default async function AdminProductsPage() {
   const session = await getServerSession(authOptions);
@@ -16,10 +17,7 @@ export default async function AdminProductsPage() {
 
   if (!user?.isAdmin) redirect("/");
 
-  const products = await prisma.product.findMany({
-    include: { images: true },
-    orderBy: { createdAt: "desc" },
-  });
+  const products = await fetchPublicProducts();
 
   return (
     <main className="p-8 max-w-5xl mx-auto">
@@ -43,9 +41,9 @@ export default async function AdminProductsPage() {
             <li key={p.id} className="border rounded p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-semibold">{p.title}</p>
+                  <p className="font-semibold">{p.name}</p>
                   <p className="text-sm text-gray-600">
-                    {p.category} • {p.status} • ${(p.priceCents / 100).toFixed(2)}
+                    {p.status} • ${(p.price_cents / 100).toFixed(2)}
                   </p>
                 </div>
 

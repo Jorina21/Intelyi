@@ -1,7 +1,9 @@
-const FASTAPI_BASE_URL = process.env.FASTAPI_BASE_URL;
-
-if (!FASTAPI_BASE_URL) {
-  throw new Error("FASTAPI_BASE_URL is missing. Check .env and restart the dev server.");
+function getFastApiBaseUrl() {
+  const baseUrl = process.env.FASTAPI_BASE_URL;
+  if (!baseUrl) {
+    throw new Error("FASTAPI_BASE_URL is missing. Check .env and restart the dev server.");
+  }
+  return baseUrl;
 }
 
 export type PublicProduct = {
@@ -13,9 +15,8 @@ export type PublicProduct = {
 };
 
 function toUrl(path: string) {
-  const base = FASTAPI_BASE_URL.endsWith("/")
-    ? FASTAPI_BASE_URL.slice(0, -1)
-    : FASTAPI_BASE_URL;
+  const baseUrl = getFastApiBaseUrl();
+  const base = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
   return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 

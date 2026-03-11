@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import ProductForm from "@/app/admin/products/_components/ProductForm";
+import { fetchPublicProductById } from "@/lib/fastapi";
 
 export default async function EditProductPage(props: {
   params: Promise<{ id: string }>;
@@ -19,10 +20,7 @@ export default async function EditProductPage(props: {
 
   if (!user?.isAdmin) redirect("/");
 
-  const product = await prisma.product.findUnique({
-    where: { id },
-    include: { images: true },
-  });
+  const product = await fetchPublicProductById(id);
 
   if (!product) return notFound();
 
@@ -33,13 +31,10 @@ export default async function EditProductPage(props: {
         mode="edit"
         product={{
           id: product.id,
-          title: product.title,
-          description: product.description,
-          category: product.category,
-          priceCents: product.priceCents,
-          stockQty: product.stockQty,
+          name: product.name,
+          description: product.description ?? "",
+          price_cents: product.price_cents,
           status: product.status,
-          imageUrl: product.images?.[0]?.url ?? null,
         }}
       />
     </main>
