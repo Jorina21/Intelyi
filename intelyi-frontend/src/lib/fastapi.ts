@@ -14,6 +14,28 @@ export type PublicProduct = {
   status: string;
 };
 
+export type InteractionCreate = {
+  product_id: string;
+  user_id?: string | null;
+  session_id?: string | null;
+  event_type: string;
+  event_value?: number | null;
+};
+
+export type Interaction = {
+  id: string;
+  product_id: string;
+  user_id: string | null;
+  session_id: string | null;
+  event_type: string;
+  event_value: number | null;
+  created_at: string;
+};
+
+export type RecommendedProduct = PublicProduct & {
+  score: number;
+};
+
 function toUrl(path: string) {
   const baseUrl = getFastApiBaseUrl();
   const base = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
@@ -42,4 +64,31 @@ export async function fetchPublicProductById(id: string): Promise<PublicProduct 
   }
 
   return (await res.json()) as PublicProduct;
+}
+
+export async function fetchRecommendedProducts(): Promise<RecommendedProduct[]> {
+  const res = await fetch(toUrl("/recommendations"), { cache: "no-store" });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch recommendations (${res.status})`);
+  }
+
+  return (await res.json()) as RecommendedProduct[];
+}
+
+export async function logInteraction(payload: InteractionCreate): Promise<Interaction | null> {
+  const res = await fetch("/api/interactions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+    keepalive: true,
+  });
+
+  if (!res.ok) {
+    return null;
+  }
+
+  return (await res.json()) as Interaction;
 }

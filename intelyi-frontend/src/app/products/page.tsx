@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { fetchPublicProducts } from "@/lib/fastapi";
+import ProductViewLink from "./_components/ProductViewLink";
 
 export default async function ProductsPage() {
   const allProducts = await fetchPublicProducts();
@@ -39,9 +40,7 @@ export default async function ProductsPage() {
                       ${(p.price_cents / 100).toFixed(2)}
                     </span>
 
-                    <Link className="underline" href={`/products/${p.id}`}>
-                      View
-                    </Link>
+                    <ProductViewLink href={`/products/${p.id}`} productId={p.id} />
                   </div>
                 </div>
               </li>

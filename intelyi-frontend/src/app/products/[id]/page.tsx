@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchPublicProductById } from "@/lib/fastapi";
+import ProductDetailInteractionLogger from "./ProductDetailInteractionLogger";
 
 export default async function ProductDetailPage(props: {
   params: Promise<{ id: string }>;
@@ -13,6 +14,8 @@ export default async function ProductDetailPage(props: {
 
   return (
     <main className="p-8 max-w-4xl mx-auto">
+      <ProductDetailInteractionLogger productId={product.id} />
+
       <div className="flex items-center justify-between mb-6">
         <Link className="underline" href="/products">
           ← Back to products
