@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import models
+from .bootstrap import ensure_product_schema
 from .db import Base, engine
 from .routes.analytics import router as analytics_router
 from .routes.interactions import router as interactions_router
@@ -24,6 +25,7 @@ app.add_middleware(
 def on_startup():
     # Temporary bootstrap; replace with Alembic migrations.
     Base.metadata.create_all(bind=engine)
+    ensure_product_schema(engine)
 
 
 @app.get("/")

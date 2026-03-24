@@ -28,6 +28,9 @@ def create_product(payload: ProductCreate, db: Session = Depends(get_db)):
     product = Product(
         name=payload.name,
         description=payload.description,
+        image_url=payload.image_url,
+        category=payload.category,
+        brand=payload.brand,
         price_cents=payload.price_cents,
         status=payload.status,
     )
