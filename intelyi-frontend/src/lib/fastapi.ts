@@ -10,6 +10,9 @@ export type PublicProduct = {
   id: string;
   name: string;
   description: string | null;
+  image_url: string | null;
+  category: string | null;
+  brand: string | null;
   price_cents: number;
   status: string;
 };
