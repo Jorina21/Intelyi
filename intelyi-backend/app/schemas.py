@@ -47,3 +47,16 @@ class RecommendedProductOut(BaseModel):
     price_cents: int
     status: str
     score: int
+    personal_score: int
+    global_score: int
+
+
+class ProductAnalyticsOut(BaseModel):
+    product_id: str
+    name: str
+    views: int
+    clicks: int
+    add_to_cart: int
+    purchases: int
+    score: int
+    ctr: float

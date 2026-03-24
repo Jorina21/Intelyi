@@ -34,12 +34,33 @@ export type Interaction = {
 
 export type RecommendedProduct = PublicProduct & {
   score: number;
+  personal_score: number;
+  global_score: number;
+};
+
+export type ProductAnalytics = {
+  product_id: string;
+  name: string;
+  views: number;
+  clicks: number;
+  add_to_cart: number;
+  purchases: number;
+  score: number;
+  ctr: number;
 };
 
 function toUrl(path: string) {
   const baseUrl = getFastApiBaseUrl();
   const base = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
   return `${base}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+function toRecommendationUrl(path: string) {
+  if (typeof window !== "undefined") {
+    return path.startsWith("/") ? `/api${path}` : `/api/${path}`;
+  }
+
+  return toUrl(path);
 }
 
 export async function fetchPublicProducts(): Promise<PublicProduct[]> {
@@ -66,14 +87,46 @@ export async function fetchPublicProductById(id: string): Promise<PublicProduct 
   return (await res.json()) as PublicProduct;
 }
 
-export async function fetchRecommendedProducts(): Promise<RecommendedProduct[]> {
-  const res = await fetch(toUrl("/recommendations"), { cache: "no-store" });
+type RecommendationContext = {
+  user_id?: string;
+  session_id?: string;
+  limit?: number;
+};
+
+export async function fetchRecommendedProducts(
+  context: RecommendationContext = {},
+): Promise<RecommendedProduct[]> {
+  const query = new URLSearchParams();
+
+  if (context.user_id) {
+    query.set("user_id", context.user_id);
+  } else if (context.session_id) {
+    query.set("session_id", context.session_id);
+  }
+
+  if (typeof context.limit === "number") {
+    query.set("limit", String(context.limit));
+  }
+
+  const queryString = query.toString();
+  const path = queryString ? `/recommendations?${queryString}` : "/recommendations";
+  const res = await fetch(toRecommendationUrl(path), { cache: "no-store" });
 
   if (!res.ok) {
     throw new Error(`Failed to fetch recommendations (${res.status})`);
   }
 
   return (await res.json()) as RecommendedProduct[];
+}
+
+export async function getProductAnalytics(): Promise<ProductAnalytics[]> {
+  const res = await fetch(toUrl("/analytics/products"), { cache: "no-store" });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch product analytics (${res.status})`);
+  }
+
+  return (await res.json()) as ProductAnalytics[];
 }
 
 export async function logInteraction(payload: InteractionCreate): Promise<Interaction | null> {

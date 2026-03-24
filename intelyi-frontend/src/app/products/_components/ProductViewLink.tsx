@@ -5,17 +5,7 @@ import { useRouter } from "next/navigation";
 import type { MouseEvent } from "react";
 
 import { logInteraction } from "@/lib/fastapi";
-
-function getSessionId() {
-  const existingSessionId = window.sessionStorage.getItem("intelyi_session_id");
-  if (existingSessionId) {
-    return existingSessionId;
-  }
-
-  const newSessionId = crypto.randomUUID();
-  window.sessionStorage.setItem("intelyi_session_id", newSessionId);
-  return newSessionId;
-}
+import { getOrCreateSessionId } from "@/lib/session";
 
 type ProductViewLinkProps = {
   href: string;
@@ -30,7 +20,7 @@ export default function ProductViewLink({ href, productId }: ProductViewLinkProp
 
     await logInteraction({
       product_id: productId,
-      session_id: getSessionId(),
+      session_id: getOrCreateSessionId(),
       event_type: "click",
     });
 
