@@ -2,9 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import models
-from .bootstrap import ensure_product_schema
+from .bootstrap import ensure_cart_schema, ensure_product_schema
 from .db import Base, engine
 from .routes.analytics import router as analytics_router
+from .routes.cart import router as cart_router
 from .routes.interactions import router as interactions_router
 from .routes.products import router as products_router
 from .routes.recommendations import router as recommendations_router
@@ -26,6 +27,7 @@ def on_startup():
     # Temporary bootstrap; replace with Alembic migrations.
     Base.metadata.create_all(bind=engine)
     ensure_product_schema(engine)
+    ensure_cart_schema(engine)
 
 
 @app.get("/")
@@ -42,3 +44,4 @@ app.include_router(products_router)
 app.include_router(interactions_router)
 app.include_router(recommendations_router)
 app.include_router(analytics_router)
+app.include_router(cart_router)

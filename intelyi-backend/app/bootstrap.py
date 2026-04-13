@@ -14,3 +14,10 @@ def ensure_product_schema(engine: Engine):
                 "ON products_py (source_external_id)"
             )
         )
+
+
+def ensure_cart_schema(engine: Engine):
+    with engine.begin() as connection:
+        connection.execute(text("CREATE INDEX IF NOT EXISTS ix_carts_status ON carts (status)"))
+        connection.execute(text("CREATE INDEX IF NOT EXISTS ix_cart_items_cart_id ON cart_items (cart_id)"))
+        connection.execute(text("CREATE INDEX IF NOT EXISTS ix_cart_items_product_id ON cart_items (product_id)"))

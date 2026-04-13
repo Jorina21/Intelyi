@@ -1,8 +1,8 @@
 from datetime import datetime
 from uuid import uuid4
 
-from sqlalchemy import DateTime, Integer, String, Text, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .db import Base
 
@@ -26,6 +26,8 @@ class Product(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
     )
 
+    cart_items: Mapped[list["CartItem"]] = relationship(back_populates="product")
+
 
 class Interaction(Base):
     __tablename__ = "interactions"
@@ -39,3 +41,60 @@ class Interaction(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+
+
+class Cart(Base):
+    __tablename__ = "carts"
+    __table_args__ = (
+        CheckConstraint(
+            "(user_id IS NOT NULL AND session_id IS NULL) OR (user_id IS NULL AND session_id IS NOT NULL)",
+            name="ck_carts_owner_context",
+        ),
+        UniqueConstraint("user_id", "status", name="uq_carts_user_status"),
+        UniqueConstraint("session_id", "status", name="uq_carts_session_status"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    session_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    status: Mapped[str] = mapped_column(String(50), nullable=False, default="ACTIVE", server_default="ACTIVE")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), server_onupdate=func.now(), onupdate=func.now()
+    )
+
+    items: Mapped[list["CartItem"]] = relationship(
+        back_populates="cart",
+        cascade="all, delete-orphan",
+        order_by="CartItem.created_at",
+    )
+
+
+class CartItem(Base):
+    __tablename__ = "cart_items"
+    __table_args__ = (
+        UniqueConstraint("cart_id", "product_id", name="uq_cart_items_cart_product"),
+        CheckConstraint("quantity > 0", name="ck_cart_items_quantity_positive"),
+        CheckConstraint("unit_price_cents >= 0", name="ck_cart_items_unit_price_non_negative"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    cart_id: Mapped[str] = mapped_column(String(36), ForeignKey("carts.id", ondelete="CASCADE"), nullable=False)
+    product_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("products_py.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    unit_price_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), server_onupdate=func.now(), onupdate=func.now()
+    )
+
+    cart: Mapped[Cart] = relationship(back_populates="items")
+    product: Mapped[Product] = relationship(back_populates="cart_items")
