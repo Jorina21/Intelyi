@@ -11,7 +11,8 @@ class Product(Base):
     __tablename__ = "products_py"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    source_external_id: Mapped[str | None] = mapped_column(String(255), nullable=True, unique=True)
+    source_dataset: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    source_external_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -98,3 +99,70 @@ class CartItem(Base):
 
     cart: Mapped[Cart] = relationship(back_populates="items")
     product: Mapped[Product] = relationship(back_populates="cart_items")
+
+
+class Order(Base):
+    __tablename__ = "orders"
+    __table_args__ = (
+        CheckConstraint(
+            "(user_id IS NOT NULL AND session_id IS NULL) OR (user_id IS NULL AND session_id IS NOT NULL)",
+            name="ck_orders_owner_context",
+        ),
+        CheckConstraint("subtotal_cents >= 0", name="ck_orders_subtotal_non_negative"),
+        CheckConstraint("total_item_count > 0", name="ck_orders_total_item_count_positive"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    session_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    source_cart_id: Mapped[str | None] = mapped_column(
+        String(36),
+        ForeignKey("carts.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    status: Mapped[str] = mapped_column(String(50), nullable=False, default="PENDING", server_default="PENDING")
+    subtotal_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    total_item_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    stripe_checkout_session_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    stripe_payment_intent_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), server_onupdate=func.now(), onupdate=func.now()
+    )
+
+    items: Mapped[list["OrderItem"]] = relationship(
+        back_populates="order",
+        cascade="all, delete-orphan",
+        order_by="OrderItem.created_at",
+    )
+
+
+class OrderItem(Base):
+    __tablename__ = "order_items"
+    __table_args__ = (
+        CheckConstraint("quantity > 0", name="ck_order_items_quantity_positive"),
+        CheckConstraint("unit_price_cents >= 0", name="ck_order_items_unit_price_non_negative"),
+        CheckConstraint("line_subtotal_cents >= 0", name="ck_order_items_line_subtotal_non_negative"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    order_id: Mapped[str] = mapped_column(String(36), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
+    product_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    product_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    product_image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    product_category: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    product_brand: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    unit_price_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    line_subtotal_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), server_onupdate=func.now(), onupdate=func.now()
+    )
+
+    order: Mapped[Order] = relationship(back_populates="items")

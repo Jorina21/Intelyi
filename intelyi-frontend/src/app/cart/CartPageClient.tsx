@@ -1,9 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
-import { Cart, fetchCurrentCart, removeCartItem, updateCartItem } from "@/lib/fastapi";
+import {
+  Cart,
+  createOrderFromCurrentCart,
+  fetchCurrentCart,
+  removeCartItem,
+  updateCartItem,
+} from "@/lib/fastapi";
 import { getOrCreateSessionId } from "@/lib/session";
 
 function formatPrice(cents: number) {
@@ -11,11 +18,13 @@ function formatPrice(cents: number) {
 }
 
 export default function CartPageClient() {
+  const router = useRouter();
   const [cart, setCart] = useState<Cart | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isCheckingOut, startCheckoutTransition] = useTransition();
 
   useEffect(() => {
     const loadCart = async () => {
@@ -46,6 +55,19 @@ export default function CartPageClient() {
         setError(mutationError instanceof Error ? mutationError.message : "Cart update failed.");
       } finally {
         setActiveItemId(null);
+      }
+    });
+  };
+
+  const handleProceedToCheckout = () => {
+    setError(null);
+
+    startCheckoutTransition(async () => {
+      try {
+        const order = await createOrderFromCurrentCart({ session_id: getOrCreateSessionId() });
+        router.push(`/orders/${order.id}`);
+      } catch (checkoutError) {
+        setError(checkoutError instanceof Error ? checkoutError.message : "Checkout failed.");
       }
     });
   };
@@ -197,6 +219,17 @@ export default function CartPageClient() {
           </dl>
           <p className="mt-4 text-xs text-gray-500">
             Totals are calculated by the backend and stay in sync with your cart state.
+          </p>
+          <button
+            type="button"
+            onClick={handleProceedToCheckout}
+            disabled={isCheckingOut}
+            className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-black px-5 py-3 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isCheckingOut ? "Creating order..." : "Proceed to Checkout"}
+          </button>
+          <p className="mt-3 text-xs text-gray-500">
+            Checkout creates a backend-owned order record. Payment is not collected in this step.
           </p>
         </aside>
       </div>

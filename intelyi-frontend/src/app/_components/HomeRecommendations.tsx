@@ -1,10 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { fetchRecommendedProducts, type RecommendedProduct } from "@/lib/fastapi";
 import { getOrCreateSessionId } from "@/lib/session";
+
+import ProductCard from "./ProductCard";
 
 type HomeRecommendationsProps = {
   initialProducts: RecommendedProduct[];
@@ -19,7 +20,7 @@ export default function HomeRecommendations({ initialProducts }: HomeRecommendat
         const sessionId = getOrCreateSessionId();
         const personalizedProducts = await fetchRecommendedProducts({
           session_id: sessionId,
-          limit: 3,
+          limit: 6,
         });
         setProducts(personalizedProducts);
       } catch {
@@ -31,47 +32,36 @@ export default function HomeRecommendations({ initialProducts }: HomeRecommendat
   }, [initialProducts]);
 
   return (
-    <section className="w-full">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-black dark:text-zinc-50">
-          Recommended Products
-        </h2>
-        <Link className="underline text-sm" href="/products">
-          View all
-        </Link>
+    <section className="space-y-5">
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <p className="store-kicker">Personalized discovery</p>
+          <h2 className="store-display mt-2 text-3xl font-semibold tracking-tight text-zinc-950">
+            Recommended for this browsing session
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--copy-muted)]">
+            Backend-ranked recommendations stay visible, but the presentation now feels like a curated commerce rail instead of a plain list.
+          </p>
+        </div>
       </div>
 
       {products.length === 0 ? (
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="rounded-[24px] border border-dashed border-[var(--border)] bg-white/70 p-6 text-sm text-[var(--copy-muted)]">
           No recommendations yet. Interactions will start shaping product ranking as people browse.
         </p>
       ) : (
-        <ul className="grid gap-4">
+        <div className="-mx-4 overflow-x-auto px-4 pb-2">
+          <div className="flex min-w-full gap-4">
           {products.map((product) => (
-            <li
+            <div
               key={product.id}
-              className="rounded-2xl border border-black/[.08] p-4 dark:border-white/[.145]"
+              className="min-w-[280px] max-w-[320px]"
             >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="font-medium text-black dark:text-zinc-50">{product.name}</h3>
-                  <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                    {product.description}
-                  </p>
-                </div>
-
-                <div className="text-right">
-                  <div className="font-medium text-black dark:text-zinc-50">
-                    ${(product.price_cents / 100).toFixed(2)}
-                  </div>
-                  <div className="text-sm text-zinc-500 dark:text-zinc-400">
-                    Score: {product.score}
-                  </div>
-                </div>
-              </div>
-            </li>
+              <ProductCard product={product} variant="compact" showScore />
+            </div>
           ))}
-        </ul>
+          </div>
+        </div>
       )}
     </section>
   );

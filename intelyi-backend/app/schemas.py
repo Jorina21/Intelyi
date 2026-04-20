@@ -4,6 +4,8 @@ from pydantic import BaseModel, Field, model_validator
 
 
 class ProductCreate(BaseModel):
+    source_dataset: str | None = None
+    source_external_id: str | None = None
     name: str
     description: str | None = None
     image_url: str | None = None
@@ -15,6 +17,8 @@ class ProductCreate(BaseModel):
 
 class ProductOut(BaseModel):
     id: str
+    source_dataset: str | None = None
+    source_external_id: str | None = None
     name: str
     description: str | None = None
     image_url: str | None = None
@@ -58,6 +62,8 @@ class RecommendedProductOut(BaseModel):
     score: int
     personal_score: int
     global_score: int
+    recommendation_reason: str | None = None
+    debug: dict[str, int | float | str | None] | None = None
 
 
 class ProductAnalyticsOut(BaseModel):
@@ -127,6 +133,52 @@ class CartOut(BaseModel):
     items: list[CartItemOut]
     total_item_count: int
     cart_subtotal_cents: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class CheckoutInitiationRequest(CartContextMixin):
+    pass
+
+
+class CheckoutSessionCreateRequest(CartContextMixin):
+    pass
+
+
+class CheckoutSessionOut(BaseModel):
+    order_id: str
+    checkout_session_id: str
+    checkout_url: str
+
+
+class OrderItemOut(BaseModel):
+    id: str
+    product_id: str
+    product_name: str
+    product_image_url: str | None = None
+    product_category: str | None = None
+    product_brand: str | None = None
+    quantity: int
+    unit_price_cents: int
+    line_subtotal_cents: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class OrderOut(BaseModel):
+    id: str
+    user_id: str | None = None
+    session_id: str | None = None
+    source_cart_id: str | None = None
+    status: str
+    items: list[OrderItemOut]
+    total_item_count: int
+    order_subtotal_cents: int
+    paid_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 

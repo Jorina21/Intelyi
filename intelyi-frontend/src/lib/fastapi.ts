@@ -8,6 +8,8 @@ function getFastApiBaseUrl() {
 
 export type PublicProduct = {
   id: string;
+  source_dataset?: string | null;
+  source_external_id?: string | null;
   name: string;
   description: string | null;
   image_url: string | null;
@@ -15,6 +17,13 @@ export type PublicProduct = {
   brand: string | null;
   price_cents: number;
   status: string;
+};
+
+export type ProductSearchParams = {
+  q?: string;
+  category?: string;
+  status?: string;
+  sort?: "newest" | "price_asc" | "price_desc" | "name_asc";
 };
 
 export type InteractionCreate = {
@@ -39,6 +48,8 @@ export type RecommendedProduct = PublicProduct & {
   score: number;
   personal_score: number;
   global_score: number;
+  recommendation_reason?: string | null;
+  debug?: Record<string, string | number | null> | null;
 };
 
 export type ProductAnalytics = {
@@ -95,6 +106,40 @@ export type CartUpdateItemPayload = CartContext & {
   quantity: number;
 };
 
+export type OrderItem = {
+  id: string;
+  product_id: string;
+  product_name: string;
+  product_image_url: string | null;
+  product_category: string | null;
+  product_brand: string | null;
+  quantity: number;
+  unit_price_cents: number;
+  line_subtotal_cents: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Order = {
+  id: string;
+  user_id: string | null;
+  session_id: string | null;
+  source_cart_id: string | null;
+  status: string;
+  items: OrderItem[];
+  total_item_count: number;
+  order_subtotal_cents: number;
+  paid_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CheckoutSession = {
+  order_id: string;
+  checkout_session_id: string;
+  checkout_url: string;
+};
+
 function toUrl(path: string) {
   const baseUrl = getFastApiBaseUrl();
   const base = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
@@ -138,14 +183,55 @@ async function parseJsonResponse<T>(res: Response, fallbackMessage: string): Pro
   return data as T;
 }
 
-export async function fetchPublicProducts(): Promise<PublicProduct[]> {
-  const res = await fetch(toUrl("/products"), { cache: "no-store" });
+function buildProductSearchQuery(params: ProductSearchParams = {}) {
+  const query = new URLSearchParams();
+
+  if (params.q) {
+    query.set("q", params.q);
+  }
+
+  if (params.category) {
+    query.set("category", params.category);
+  }
+
+  if (params.status) {
+    query.set("status", params.status);
+  }
+
+  if (params.sort) {
+    query.set("sort", params.sort);
+  }
+
+  const queryString = query.toString();
+  return queryString ? `?${queryString}` : "";
+}
+
+export async function fetchPublicProducts(params: ProductSearchParams = {}): Promise<PublicProduct[]> {
+  const res = await fetch(toUrl(`/products${buildProductSearchQuery(params)}`), { cache: "no-store" });
 
   if (!res.ok) {
     throw new Error(`Failed to fetch products (${res.status})`);
   }
 
   return (await res.json()) as PublicProduct[];
+}
+
+export async function fetchProductCategories(status?: string): Promise<string[]> {
+  const query = new URLSearchParams();
+
+  if (status) {
+    query.set("status", status);
+  }
+
+  const queryString = query.toString();
+  const path = queryString ? `/products/categories?${queryString}` : "/products/categories";
+  const res = await fetch(toUrl(path), { cache: "no-store" });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch product categories (${res.status})`);
+  }
+
+  return (await res.json()) as string[];
 }
 
 export async function fetchPublicProductById(id: string): Promise<PublicProduct | null> {
@@ -259,4 +345,43 @@ export async function removeCartItem(itemId: string, context: CartContext): Prom
     method: "DELETE",
   });
   return parseJsonResponse<Cart>(res, "Failed to remove cart item");
+}
+
+export async function createOrderFromCurrentCart(context: CartContext): Promise<Order> {
+  const res = await fetch("/api/orders", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(context),
+  });
+  return parseJsonResponse<Order>(res, "Failed to create order");
+}
+
+export async function fetchOrderById(orderId: string, context: CartContext): Promise<Order> {
+  const queryString = buildCartQuery(context);
+  const path = queryString ? `/api/orders/${orderId}?${queryString}` : `/api/orders/${orderId}`;
+  const res = await fetch(path, { cache: "no-store" });
+  return parseJsonResponse<Order>(res, "Failed to fetch order");
+}
+
+export async function fetchOrders(context: CartContext): Promise<Order[]> {
+  const queryString = buildCartQuery(context);
+  const path = queryString ? `/api/orders?${queryString}` : "/api/orders";
+  const res = await fetch(path, { cache: "no-store" });
+  return parseJsonResponse<Order[]>(res, "Failed to fetch orders");
+}
+
+export async function createCheckoutSessionForOrder(
+  orderId: string,
+  context: CartContext,
+): Promise<CheckoutSession> {
+  const res = await fetch(`/api/orders/${orderId}/checkout-session`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(context),
+  });
+  return parseJsonResponse<CheckoutSession>(res, "Failed to create checkout session");
 }

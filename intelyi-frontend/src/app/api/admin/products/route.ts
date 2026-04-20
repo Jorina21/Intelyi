@@ -1,37 +1,26 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { prisma } from "@/lib/prisma";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getFastApiBaseUrl, getInternalProxyHeaders, requireAdminProxyUser } from "@/lib/server/backendProxy";
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-    select: { isAdmin: true },
-  });
-
-  if (!user?.isAdmin) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  const fastApiBaseUrl = process.env.FASTAPI_BASE_URL;
-  if (!fastApiBaseUrl) {
-    return NextResponse.json(
-      { error: "FASTAPI_BASE_URL is not configured" },
-      { status: 500 }
-    );
+  let adminUser;
+  try {
+    adminUser = await requireAdminProxyUser();
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (error instanceof Error && error.message === "FORBIDDEN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    throw error;
   }
 
   const body = await req.text();
-  const response = await fetch(`${fastApiBaseUrl}/admin/products`, {
+  const response = await fetch(`${getFastApiBaseUrl()}/admin/products`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...getInternalProxyHeaders(adminUser.id),
     },
     body,
   });

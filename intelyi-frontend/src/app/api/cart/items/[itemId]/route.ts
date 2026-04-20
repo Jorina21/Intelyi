@@ -1,20 +1,18 @@
 import { NextResponse } from "next/server";
-
-function getFastApiBaseUrl() {
-  const baseUrl = process.env.FASTAPI_BASE_URL;
-  if (!baseUrl) {
-    throw new Error("FASTAPI_BASE_URL is missing. Check .env and restart the dev server.");
-  }
-  return baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
-}
+import {
+  buildOwnerQueryFromRequest,
+  getCurrentProxyUser,
+  getFastApiBaseUrl,
+  getInternalProxyHeaders,
+} from "@/lib/server/backendProxy";
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ itemId: string }> },
 ) {
+  const user = await getCurrentProxyUser();
   const { itemId } = await params;
-  const incomingUrl = new URL(request.url);
-  const queryString = incomingUrl.searchParams.toString();
+  const queryString = buildOwnerQueryFromRequest(new URL(request.url), user).toString();
   const targetUrl = queryString
     ? `${getFastApiBaseUrl()}/cart/items/${itemId}?${queryString}`
     : `${getFastApiBaseUrl()}/cart/items/${itemId}`;
@@ -31,6 +29,7 @@ export async function PATCH(
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
+      ...getInternalProxyHeaders(user?.id),
     },
     body: JSON.stringify(payload),
     cache: "no-store",
@@ -49,9 +48,9 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ itemId: string }> },
 ) {
+  const user = await getCurrentProxyUser();
   const { itemId } = await params;
-  const incomingUrl = new URL(request.url);
-  const queryString = incomingUrl.searchParams.toString();
+  const queryString = buildOwnerQueryFromRequest(new URL(request.url), user).toString();
   const targetUrl = queryString
     ? `${getFastApiBaseUrl()}/cart/items/${itemId}?${queryString}`
     : `${getFastApiBaseUrl()}/cart/items/${itemId}`;
@@ -59,6 +58,7 @@ export async function DELETE(
   const response = await fetch(targetUrl, {
     method: "DELETE",
     cache: "no-store",
+    headers: getInternalProxyHeaders(user?.id),
   });
 
   const data = await response.json().catch(() => null);

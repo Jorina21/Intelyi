@@ -81,3 +81,5 @@ next-env.d.ts
 /src/generated/prisma
 
 /data
+
+/.codex

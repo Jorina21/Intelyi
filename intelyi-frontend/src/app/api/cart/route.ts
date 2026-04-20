@@ -1,21 +1,23 @@
 import { NextResponse } from "next/server";
-
-function getFastApiBaseUrl() {
-  const baseUrl = process.env.FASTAPI_BASE_URL;
-  if (!baseUrl) {
-    throw new Error("FASTAPI_BASE_URL is missing. Check .env and restart the dev server.");
-  }
-  return baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
-}
+import {
+  buildOwnerQueryFromRequest,
+  getCurrentProxyUser,
+  getFastApiBaseUrl,
+  getInternalProxyHeaders,
+  normalizeOwnerPayload,
+} from "@/lib/server/backendProxy";
 
 export async function GET(request: Request) {
-  const incomingUrl = new URL(request.url);
-  const queryString = incomingUrl.searchParams.toString();
+  const user = await getCurrentProxyUser();
+  const queryString = buildOwnerQueryFromRequest(new URL(request.url), user).toString();
   const targetUrl = queryString
     ? `${getFastApiBaseUrl()}/cart?${queryString}`
     : `${getFastApiBaseUrl()}/cart`;
 
-  const response = await fetch(targetUrl, { cache: "no-store" });
+  const response = await fetch(targetUrl, {
+    cache: "no-store",
+    headers: getInternalProxyHeaders(user?.id),
+  });
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
@@ -26,6 +28,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const user = await getCurrentProxyUser();
   let payload: unknown;
 
   try {
@@ -38,8 +41,9 @@ export async function POST(request: Request) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...getInternalProxyHeaders(user?.id),
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(normalizeOwnerPayload(payload, user)),
     cache: "no-store",
   });
 
