@@ -6,6 +6,7 @@ from .bootstrap import ensure_cart_schema, ensure_order_schema, ensure_product_s
 from .db import Base, engine
 from .routes.analytics import router as analytics_router
 from .routes.admin_products import router as admin_products_router
+from .routes.bundles import router as bundles_router
 from .routes.cart import router as cart_router
 from .routes.interactions import router as interactions_router
 from .routes.orders import router as orders_router
@@ -49,6 +50,7 @@ app.include_router(products_router)
 app.include_router(admin_products_router)
 app.include_router(interactions_router)
 app.include_router(recommendations_router)
+app.include_router(bundles_router)
 app.include_router(analytics_router)
 app.include_router(cart_router)
 app.include_router(orders_router)

@@ -52,6 +52,12 @@ export type RecommendedProduct = PublicProduct & {
   debug?: Record<string, string | number | null> | null;
 };
 
+export type ProductBundleItem = PublicProduct & {
+  score: number;
+  bundle_reason: string;
+  debug?: Record<string, string | number | null> | null;
+};
+
 export type ProductAnalytics = {
   product_id: string;
   name: string;
@@ -278,6 +284,19 @@ export async function fetchRecommendedProducts(
   }
 
   return (await res.json()) as RecommendedProduct[];
+}
+
+export async function fetchProductBundle(productId: string, limit = 4): Promise<ProductBundleItem[]> {
+  const query = new URLSearchParams();
+  query.set("limit", String(limit));
+
+  const res = await fetch(toUrl(`/bundles/products/${productId}?${query.toString()}`), { cache: "no-store" });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch product bundle (${res.status})`);
+  }
+
+  return (await res.json()) as ProductBundleItem[];
 }
 
 export async function getProductAnalytics(): Promise<ProductAnalytics[]> {

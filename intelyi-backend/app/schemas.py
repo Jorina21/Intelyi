@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -63,6 +64,38 @@ class RecommendedProductOut(BaseModel):
     personal_score: int
     global_score: int
     recommendation_reason: str | None = None
+    debug: dict[str, int | float | str | None] | None = None
+
+
+class RecommendationBreakdownOut(RecommendedProductOut):
+    baseline_score: int
+    baseline_rank: int | None = None
+    current_rank: int | None = None
+    rank_delta: int | None = None
+    components: dict[str, int | float | str | None]
+
+
+class RecommendationEvaluationOut(BaseModel):
+    context: dict[str, str | int | None]
+    tuning: dict[str, int | float]
+    summary: dict[str, Any]
+    top_drivers: list[dict[str, int | float | str]]
+    baseline_comparison: dict[str, Any]
+    recommendations: list[RecommendationBreakdownOut]
+    baseline_recommendations: list[RecommendationBreakdownOut]
+
+
+class ProductBundleItemOut(BaseModel):
+    id: str
+    name: str
+    description: str | None = None
+    image_url: str | None = None
+    category: str | None = None
+    brand: str | None = None
+    price_cents: int
+    status: str
+    score: int
+    bundle_reason: str
     debug: dict[str, int | float | str | None] | None = None
 
 

@@ -24,6 +24,9 @@ export default async function AdminProductsPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Admin Products</h1>
         <div className="flex items-center gap-4">
+          <Link className="underline" href="/admin/debug">
+            Debug
+          </Link>
           <Link className="underline" href="/admin/products/new">
             New Product
           </Link>
