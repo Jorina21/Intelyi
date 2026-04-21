@@ -1,85 +1,131 @@
-# =========================
-# Python
-# =========================
+# Intelyi monorepo ignore rules
+#
+# Keep source, migrations, package manifests, lockfiles, and config templates in git.
+# Keep generated dependencies, build output, caches, credentials, local databases,
+# and raw/private datasets out of git.
 
+# =========================
+# OS / editor noise
+# =========================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# =========================
+# Secrets / local env
+# =========================
+.env
+.env.*
+!.env.example
+!.env.template
+!.env.sample
+
+# =========================
+# Local dependency installs
+# =========================
+node_modules/
+**/node_modules/
+.venv/
+**/.venv/
+venv/
+**/venv/
+env/
+**/env/
+
+# =========================
+# Python generated files
+# =========================
 __pycache__/
+**/__pycache__/
 *.py[cod]
 *.pyo
 *.pyd
 *.so
-
-# Python virtual environments
-.venv/
-venv/
-env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
 
 # =========================
-# Node / Next.js
+# Next.js / TypeScript output
 # =========================
-
-node_modules/
 .next/
+**/.next/
 out/
+**/out/
+dist/
+**/dist/
 build/
-
-# Yarn / pnpm
-.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
-.pnpm-debug.log*
-
-# =========================
-# Testing
-# =========================
-
-coverage/
-
-# =========================
-# Environment variables
-# =========================
-
-.env
-.env.*
-!.env.example
-
-# =========================
-# System files
-# =========================
-
-.DS_Store
-Thumbs.db
-
-# =========================
-# Logs
-# =========================
-
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# =========================
-# Vercel
-# =========================
-
-.vercel
-
-# =========================
-# TypeScript
-# =========================
-
+**/build/
 *.tsbuildinfo
 next-env.d.ts
 
 # =========================
-# Prisma generated files
+# Package manager caches / logs
 # =========================
+.npm/
+.pnpm-store/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp
+.pnp.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-/src/generated/prisma
+# =========================
+# Framework / deployment output
+# =========================
+.vercel/
+**/.vercel/
 
-/data
+# =========================
+# Prisma / generated clients
+# =========================
+src/generated/prisma/
+**/src/generated/prisma/
+generated/
+**/generated/
 
-/.codex
+# =========================
+# Local databases and runtime artifacts
+# =========================
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+*.sqlite-shm
+*.sqlite-wal
+tmp/
+**/tmp/
+temp/
+**/temp/
+
+# =========================
+# Data and uploaded artifacts
+# =========================
+data/
+**/data/
+uploads/
+**/uploads/
+exports/
+**/exports/
+
+# =========================
+# Codex / local agent state
+# =========================
+.codex
+.codex/
+**/.codex
+**/.codex/
