@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import uuid4
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import JSON, CheckConstraint, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .db import Base
@@ -39,6 +39,50 @@ class Interaction(Base):
     session_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     event_type: Mapped[str] = mapped_column(String(100), nullable=False)
     event_value: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+class PromotionSlotActionStat(Base):
+    __tablename__ = "promotion_slot_action_stats"
+    __table_args__ = (
+        UniqueConstraint("slot_key", "context_key", "action_key", name="uq_promotion_slot_action_stats_slot_context_action"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    slot_key: Mapped[str] = mapped_column(String(100), nullable=False)
+    page_context: Mapped[str] = mapped_column(String(100), nullable=False)
+    context_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    action_key: Mapped[str] = mapped_column(String(100), nullable=False)
+    impressions: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    rewards: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    last_rewarded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+
+class PromotionSlotDecision(Base):
+    __tablename__ = "promotion_slot_decisions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    slot_key: Mapped[str] = mapped_column(String(100), nullable=False)
+    page_context: Mapped[str] = mapped_column(String(100), nullable=False)
+    action_key: Mapped[str] = mapped_column(String(100), nullable=False)
+    selection_mode: Mapped[str] = mapped_column(String(50), nullable=False)
+    epsilon: Mapped[int] = mapped_column(Integer, nullable=False, default=20, server_default="20")
+    estimated_reward: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    user_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    session_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    context_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    context_features: Mapped[dict[str, str | None]] = mapped_column(JSON, nullable=False)
+    reward_event_type: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    reward_product_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    rewarded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

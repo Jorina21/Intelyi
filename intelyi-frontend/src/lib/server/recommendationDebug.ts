@@ -64,6 +64,39 @@ export type BundleDebugItem = {
   debug?: Record<string, number | string | null> | null;
 };
 
+export type PromotionSlotActionStats = {
+  action_key: string;
+  impressions: number;
+  rewards: number;
+  reward_rate: number;
+  context_key: string;
+  updated_at: string | null;
+};
+
+export type PromotionSlotDecisionSummary = {
+  id: string;
+  action_key: string;
+  selection_mode: string;
+  estimated_reward: number;
+  context_key: string;
+  context_features: Record<string, string | null>;
+  reward_event_type: string | null;
+  reward_product_id: string | null;
+  rewarded_at: string | null;
+  created_at: string;
+};
+
+export type PromotionSlotDebug = {
+  slot_key: string;
+  epsilon: number;
+  candidate_actions: string[];
+  context: Record<string, string | null>;
+  exploit_action: string;
+  current_context_stats: PromotionSlotActionStats[];
+  aggregate_stats: PromotionSlotActionStats[];
+  recent_decisions: PromotionSlotDecisionSummary[];
+};
+
 type EvaluationParams = {
   userId?: string | null;
   sessionId?: string | null;
@@ -124,4 +157,22 @@ export async function fetchBundleDebug(productId: string, limit = 4): Promise<Bu
   });
 
   return parseBackendJson<BundleDebugItem[]>(response, "Failed to fetch bundle debug output");
+}
+
+export async function fetchPromotionSlotDebug({
+  userId,
+  sessionId,
+  limit = 12,
+}: EvaluationParams): Promise<PromotionSlotDebug> {
+  const queryString = toQueryString({
+    user_id: userId,
+    session_id: sessionId,
+    limit,
+  });
+  const response = await fetch(`${getFastApiBaseUrl()}/promotion-slots/debug/homepage?${queryString}`, {
+    cache: "no-store",
+    headers: getInternalProxyHeaders(),
+  });
+
+  return parseBackendJson<PromotionSlotDebug>(response, "Failed to fetch promotion slot debug");
 }

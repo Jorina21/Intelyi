@@ -5,8 +5,10 @@ import { fetchPublicProducts } from "@/lib/fastapi";
 import { requireAdminProxyUser } from "@/lib/server/backendProxy";
 import {
   fetchBundleDebug,
+  fetchPromotionSlotDebug,
   fetchRecommendationEvaluation,
   type BundleDebugItem,
+  type PromotionSlotActionStats,
   type RecommendationBreakdown,
 } from "@/lib/server/recommendationDebug";
 
@@ -119,6 +121,38 @@ function BundleCard({ item }: { item: BundleDebugItem }) {
   );
 }
 
+function PromotionStatCard({
+  title,
+  stats,
+}: {
+  title: string;
+  stats: PromotionSlotActionStats[];
+}) {
+  return (
+    <section className="rounded-lg border border-zinc-200 bg-white p-5">
+      <h2 className="text-lg font-semibold text-zinc-950">{title}</h2>
+      <div className="mt-4 space-y-3">
+        {stats.map((stat) => (
+          <div key={`${title}-${stat.action_key}`} className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-zinc-950">{stat.action_key.replaceAll("_", " ")}</p>
+                <p className="mt-1 text-xs text-zinc-500">{stat.context_key}</p>
+              </div>
+              <div className="text-right text-sm text-zinc-700">
+                <div>{Math.round(stat.reward_rate * 100)}% reward rate</div>
+                <div className="mt-1 text-xs text-zinc-500">
+                  {stat.rewards} rewards / {stat.impressions} impressions
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 async function requireAdminOrRedirect() {
   try {
     return await requireAdminProxyUser();
@@ -134,13 +168,18 @@ export default async function AdminDebugPage({ searchParams }: AdminDebugPagePro
   const products = await fetchPublicProducts({ status: "ACTIVE", sort: "newest" });
   const selectedProductId = params.product_id || products[0]?.id || "";
 
-  const [evaluation, bundleItems] = await Promise.all([
+  const [evaluation, bundleItems, promotionSlotDebug] = await Promise.all([
     fetchRecommendationEvaluation({
       userId: params.user_id,
       sessionId: params.session_id,
       limit: 8,
     }),
     selectedProductId ? fetchBundleDebug(selectedProductId, 4) : Promise.resolve([]),
+    fetchPromotionSlotDebug({
+      userId: params.user_id,
+      sessionId: params.session_id,
+      limit: 10,
+    }),
   ]);
   const selectedProduct = products.find((product) => product.id === selectedProductId);
 
@@ -254,6 +293,69 @@ export default async function AdminDebugPage({ searchParams }: AdminDebugPagePro
           ) : null}
         </section>
       </div>
+
+      <section className="mt-8 rounded-lg border border-zinc-200 bg-white p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-zinc-950">Promotion Slot Bandit</h2>
+            <p className="mt-1 max-w-3xl text-sm leading-6 text-zinc-600">
+              One homepage slot uses epsilon-greedy action selection across three shelf strategies. Reward is a click on any product inside the chosen slot.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <ComponentPill label="slot" value={promotionSlotDebug.slot_key} />
+            <ComponentPill label="epsilon" value={promotionSlotDebug.epsilon} />
+            <ComponentPill label="exploit" value={promotionSlotDebug.exploit_action} />
+            <ComponentPill label="context" value={`${promotionSlotDebug.context.user_state}:${promotionSlotDebug.context.top_category ?? "none"}`} />
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-4 md:grid-cols-3">
+          <MetricCard label="Candidate actions" value={promotionSlotDebug.candidate_actions.length} detail={promotionSlotDebug.candidate_actions.join(", ")} />
+          <MetricCard label="Current context" value={promotionSlotDebug.context.user_state ?? "guest"} detail={promotionSlotDebug.context.top_category ?? "no top category"} />
+          <MetricCard label="Recent decisions" value={promotionSlotDebug.recent_decisions.length} detail="latest slot selections" />
+        </div>
+
+        <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_1fr]">
+          <PromotionStatCard title="Current Context Stats" stats={promotionSlotDebug.current_context_stats} />
+          <PromotionStatCard title="Aggregate Stats" stats={promotionSlotDebug.aggregate_stats} />
+        </div>
+
+        <div className="mt-6 overflow-x-auto rounded-lg border border-zinc-200">
+          <table className="min-w-full text-left">
+            <thead className="bg-zinc-50 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
+              <tr>
+                <th className="px-4 py-3">Decision</th>
+                <th className="px-4 py-3">Mode</th>
+                <th className="px-4 py-3">Context</th>
+                <th className="px-4 py-3">Reward</th>
+              </tr>
+            </thead>
+            <tbody>
+              {promotionSlotDebug.recent_decisions.map((decision) => (
+                <tr key={decision.id} className="border-t border-zinc-200 align-top">
+                  <td className="px-4 py-4 text-sm text-zinc-700">
+                    <div className="font-medium text-zinc-950">{decision.action_key.replaceAll("_", " ")}</div>
+                    <div className="mt-1 text-xs text-zinc-500">{decision.id}</div>
+                  </td>
+                  <td className="px-4 py-4 text-sm text-zinc-700">
+                    <div>{decision.selection_mode}</div>
+                    <div className="mt-1 text-xs text-zinc-500">estimated {Math.round(decision.estimated_reward * 100)}%</div>
+                  </td>
+                  <td className="px-4 py-4 text-sm text-zinc-700">
+                    <div>{decision.context_features.user_state}</div>
+                    <div className="mt-1 text-xs text-zinc-500">{decision.context_features.top_category ?? "no top category"}</div>
+                  </td>
+                  <td className="px-4 py-4 text-sm text-zinc-700">
+                    <div>{decision.reward_event_type ?? "none"}</div>
+                    <div className="mt-1 text-xs text-zinc-500">{decision.reward_product_id ?? "no rewarded product"}</div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       <section className="mt-8 rounded-lg border border-zinc-200 bg-white">
         <div className="border-b border-zinc-200 p-5">

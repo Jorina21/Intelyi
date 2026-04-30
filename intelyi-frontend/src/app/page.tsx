@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import HomeRecommendations from "@/app/_components/HomeRecommendations";
+import HomepagePromotionSlot from "@/app/_components/HomepagePromotionSlot";
 import ProductCard from "@/app/_components/ProductCard";
 import ProductRail from "@/app/_components/ProductRail";
 import { fetchProductCategories, fetchPublicProducts, fetchRecommendedProducts } from "@/lib/fastapi";
@@ -151,6 +152,8 @@ export default async function Home() {
       </section>
 
       <HomeRecommendations initialProducts={recommendedProducts} />
+
+      <HomepagePromotionSlot />
 
       <ProductRail
         title="Fresh across the catalog"

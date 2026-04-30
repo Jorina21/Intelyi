@@ -69,6 +69,36 @@ export type ProductAnalytics = {
   ctr: number;
 };
 
+export type PromotionSlotSelection = {
+  slot_key: string;
+  page_context: string;
+  decision_id: string;
+  action_key: string;
+  title: string;
+  subtitle: string;
+  rationale: string;
+  products: PublicProduct[];
+  decision_mode: string;
+  epsilon: number;
+  context: Record<string, string | null>;
+  estimated_reward: number;
+  action_stats: Record<
+    string,
+    {
+      impressions: number;
+      rewards: number;
+      reward_rate: number;
+      context_key: string;
+    }
+  >;
+};
+
+export type PromotionSlotRewardPayload = {
+  decision_id: string;
+  session_id?: string | null;
+  product_id?: string | null;
+};
+
 export type CartContext = {
   user_id?: string | null;
   session_id?: string | null;
@@ -324,6 +354,27 @@ export async function logInteraction(payload: InteractionCreate): Promise<Intera
   }
 
   return (await res.json()) as Interaction;
+}
+
+export async function fetchHomepagePromotionSlot(sessionId: string): Promise<PromotionSlotSelection> {
+  const query = new URLSearchParams({ session_id: sessionId }).toString();
+  const res = await fetch(`/api/promotion-slots/homepage?${query}`, { cache: "no-store" });
+  return parseJsonResponse<PromotionSlotSelection>(res, "Failed to fetch homepage promotion slot");
+}
+
+export async function logPromotionSlotReward(payload: PromotionSlotRewardPayload): Promise<void> {
+  const res = await fetch("/api/promotion-slots/reward", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+    keepalive: true,
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to log promotion slot reward");
+  }
 }
 
 export async function fetchCurrentCart(context: CartContext): Promise<Cart> {

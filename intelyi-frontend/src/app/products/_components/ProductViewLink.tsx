@@ -10,19 +10,23 @@ import { getOrCreateSessionId } from "@/lib/session";
 type ProductViewLinkProps = {
   href: string;
   productId: string;
+  onBeforeNavigate?: (productId: string) => Promise<void> | void;
 };
 
-export default function ProductViewLink({ href, productId }: ProductViewLinkProps) {
+export default function ProductViewLink({ href, productId, onBeforeNavigate }: ProductViewLinkProps) {
   const router = useRouter();
 
   async function handleClick(event: MouseEvent<HTMLAnchorElement>) {
     event.preventDefault();
 
-    await logInteraction({
-      product_id: productId,
-      session_id: getOrCreateSessionId(),
-      event_type: "click",
-    });
+    await Promise.all([
+      logInteraction({
+        product_id: productId,
+        session_id: getOrCreateSessionId(),
+        event_type: "click",
+      }),
+      onBeforeNavigate?.(productId),
+    ]);
 
     router.push(href);
   }

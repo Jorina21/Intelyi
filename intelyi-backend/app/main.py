@@ -11,6 +11,7 @@ from .routes.cart import router as cart_router
 from .routes.interactions import router as interactions_router
 from .routes.orders import router as orders_router
 from .routes.products import router as products_router
+from .routes.promotion_slots import router as promotion_slots_router
 from .routes.recommendations import router as recommendations_router
 from .routes.stripe_webhooks import router as stripe_webhooks_router
 from .settings import settings
@@ -50,6 +51,7 @@ app.include_router(products_router)
 app.include_router(admin_products_router)
 app.include_router(interactions_router)
 app.include_router(recommendations_router)
+app.include_router(promotion_slots_router)
 app.include_router(bundles_router)
 app.include_router(analytics_router)
 app.include_router(cart_router)

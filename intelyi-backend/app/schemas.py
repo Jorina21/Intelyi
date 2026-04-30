@@ -51,6 +51,67 @@ class InteractionOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class PromotionSlotRewardCreate(BaseModel):
+    decision_id: str
+    session_id: str | None = None
+    product_id: str | None = None
+
+
+class PromotionSlotProductOut(ProductOut):
+    pass
+
+
+class PromotionSlotSelectionOut(BaseModel):
+    slot_key: str
+    page_context: str
+    decision_id: str
+    action_key: str
+    title: str
+    subtitle: str
+    rationale: str
+    products: list[PromotionSlotProductOut]
+    decision_mode: str
+    epsilon: float
+    context: dict[str, str | None]
+    estimated_reward: float
+    action_stats: dict[str, dict[str, int | float | str | None]]
+
+
+class PromotionSlotDecisionSummaryOut(BaseModel):
+    id: str
+    action_key: str
+    selection_mode: str
+    estimated_reward: float
+    context_key: str
+    context_features: dict[str, str | None]
+    reward_event_type: str | None = None
+    reward_product_id: str | None = None
+    rewarded_at: datetime | None = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class PromotionSlotActionStatsOut(BaseModel):
+    action_key: str
+    impressions: int
+    rewards: int
+    reward_rate: float
+    context_key: str
+    updated_at: datetime | None = None
+
+
+class PromotionSlotDebugOut(BaseModel):
+    slot_key: str
+    epsilon: float
+    candidate_actions: list[str]
+    context: dict[str, str | None]
+    exploit_action: str
+    current_context_stats: list[PromotionSlotActionStatsOut]
+    aggregate_stats: list[PromotionSlotActionStatsOut]
+    recent_decisions: list[PromotionSlotDecisionSummaryOut]
+
+
 class RecommendedProductOut(BaseModel):
     id: str
     name: str

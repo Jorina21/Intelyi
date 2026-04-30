@@ -12,6 +12,7 @@ type ProductCardProps = {
   variant?: "default" | "compact";
   className?: string;
   showScore?: boolean;
+  onViewClick?: (productId: string) => Promise<void> | void;
 };
 
 function formatPrice(priceCents: number) {
@@ -23,6 +24,7 @@ export default function ProductCard({
   variant = "default",
   className,
   showScore = false,
+  onViewClick,
 }: ProductCardProps) {
   const isCompact = variant === "compact";
   const imageUrl = product.image_url || "https://via.placeholder.com/900x1200?text=Intelyi";
@@ -86,7 +88,7 @@ export default function ProductCard({
         </div>
 
         <div className="flex items-center justify-between gap-3 border-t border-[var(--border)] pt-4">
-          <ProductViewLink href={`/products/${product.id}`} productId={product.id} />
+          <ProductViewLink href={`/products/${product.id}`} productId={product.id} onBeforeNavigate={onViewClick} />
           <AddToCartButton
             productId={product.id}
             className="rounded-full bg-zinc-950 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
