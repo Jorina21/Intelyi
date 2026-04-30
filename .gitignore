@@ -116,6 +116,7 @@ temp/
 # Data and uploaded artifacts
 # =========================
 data/
+data/amazon_dataset
 **/data/
 uploads/
 **/uploads/
