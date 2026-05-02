@@ -1,10 +1,4 @@
-function getFastApiBaseUrl() {
-  const baseUrl = process.env.FASTAPI_BASE_URL;
-  if (!baseUrl) {
-    throw new Error("FASTAPI_BASE_URL is missing. Check .env and restart the dev server.");
-  }
-  return baseUrl;
-}
+import { getApiBaseUrl } from "@/lib/apiBaseUrl";
 
 export type PublicProduct = {
   id: string;
@@ -177,8 +171,7 @@ export type CheckoutSession = {
 };
 
 function toUrl(path: string) {
-  const baseUrl = getFastApiBaseUrl();
-  const base = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+  const base = getApiBaseUrl();
   return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 

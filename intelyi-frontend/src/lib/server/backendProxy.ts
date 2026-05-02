@@ -3,6 +3,7 @@ import "server-only";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getApiBaseUrl } from "@/lib/apiBaseUrl";
 import { prisma } from "@/lib/prisma";
 
 export type ProxyUser = {
@@ -12,11 +13,7 @@ export type ProxyUser = {
 };
 
 export function getFastApiBaseUrl() {
-  const baseUrl = process.env.FASTAPI_BASE_URL;
-  if (!baseUrl) {
-    throw new Error("FASTAPI_BASE_URL is missing. Check .env and restart the dev server.");
-  }
-  return baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+  return getApiBaseUrl();
 }
 
 export function getInternalProxyHeaders(userId?: string | null): HeadersInit {

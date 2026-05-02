@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
+import { getApiBaseUrl } from "@/lib/apiBaseUrl";
 
 function getFastApiBaseUrl() {
-  const baseUrl = process.env.FASTAPI_BASE_URL;
-  if (!baseUrl) {
-    throw new Error("FASTAPI_BASE_URL is missing. Check .env and restart the dev server.");
-  }
-  return baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+  return getApiBaseUrl();
 }
 
 export async function GET(request: Request) {
