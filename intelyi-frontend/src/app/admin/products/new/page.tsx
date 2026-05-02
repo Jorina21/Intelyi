@@ -3,11 +3,12 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import ProductForm from "@/app/admin/products/_components/ProductForm";
+import { buildSignInUrl } from "@/lib/auth/urls";
 
 export default async function NewProductPage() {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user?.email) redirect("/api/auth/signin");
+  if (!session?.user?.email) redirect(buildSignInUrl("/admin/products/new"));
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import ProductForm from "@/app/admin/products/_components/ProductForm";
 import { fetchPublicProductById } from "@/lib/fastapi";
+import { buildSignInUrl } from "@/lib/auth/urls";
 
 export default async function EditProductPage(props: {
   params: Promise<{ id: string }>;
@@ -11,7 +12,7 @@ export default async function EditProductPage(props: {
   const { id } = await props.params;
   const session = await getServerSession(authOptions);
 
-  if (!session?.user?.email) redirect("/api/auth/signin");
+  if (!session?.user?.email) redirect(buildSignInUrl(`/admin/products/${id}/edit`));
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },

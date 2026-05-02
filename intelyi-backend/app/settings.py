@@ -6,7 +6,7 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = ""  # set in .env when you’re ready
     FRONTEND_ORIGIN: str = "http://localhost:3000"
-    STRIPE_SECRET_KEY: str = ""
+    STRIPE_SECRET_KEY: str = "STRIPE_SECRET_KEY_FROM_ENV"
     STRIPE_WEBHOOK_SECRET: str = ""
     STRIPE_SUCCESS_URL: str = "http://localhost:3000/checkout/success"
     STRIPE_CANCEL_URL: str = "http://localhost:3000/checkout/cancel"

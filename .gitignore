@@ -9,6 +9,9 @@
 # =========================
 .DS_Store
 Thumbs.db
+Desktop.ini
+.Spotlight-V100/
+.Trashes/
 *.swp
 *.swo
 *~
@@ -23,6 +26,9 @@ Thumbs.db
 !.env.example
 !.env.template
 !.env.sample
+*.pem
+*.key
+*.crt
 
 # =========================
 # Local dependency installs
@@ -35,6 +41,7 @@ venv/
 **/venv/
 env/
 **/env/
+__pypackages__/
 
 # =========================
 # Python generated files
@@ -45,11 +52,21 @@ __pycache__/
 *.pyo
 *.pyd
 *.so
+*.py,cover
 *.egg-info/
+.eggs/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.hypothesis/
+.pyre/
+.tox/
+.nox/
+.ipynb_checkpoints/
+.python-version
+pip-wheel-metadata/
 .coverage
+.coverage.*
 coverage.xml
 htmlcov/
 
@@ -65,7 +82,10 @@ dist/
 build/
 **/build/
 *.tsbuildinfo
-next-env.d.ts
+.turbo/
+.parcel-cache/
+.cache/
+.eslintcache
 
 # =========================
 # Package manager caches / logs
@@ -82,6 +102,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+*.log
 
 # =========================
 # Framework / deployment output
@@ -94,8 +115,6 @@ pnpm-debug.log*
 # =========================
 src/generated/prisma/
 **/src/generated/prisma/
-generated/
-**/generated/
 
 # =========================
 # Local databases and runtime artifacts
@@ -107,6 +126,11 @@ generated/
 *.sqlite-journal
 *.sqlite-shm
 *.sqlite-wal
+*.db-journal
+*.pid
+*.pid.lock
+*.seed
+*.stackdump
 tmp/
 **/tmp/
 temp/
@@ -116,12 +140,17 @@ temp/
 # Data and uploaded artifacts
 # =========================
 data/
-data/amazon_dataset
-**/data/
+data/amazon_dataset/
 uploads/
-**/uploads/
 exports/
-**/exports/
+
+# =========================
+# Test output
+# =========================
+coverage/
+**/coverage/
+test-results/
+playwright-report/
 
 # =========================
 # Codex / local agent state

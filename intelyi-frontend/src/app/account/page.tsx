@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import OrderHistoryList from "@/app/account/_components/OrderHistoryList";
+import { buildSignInUrl } from "@/lib/auth/urls";
 import { getCurrentProxyUser } from "@/lib/server/backendProxy";
 import { fetchOrdersForUser } from "@/lib/server/orderHistory";
 
@@ -21,7 +22,7 @@ export default async function AccountPage() {
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
-              href="/api/auth/signin"
+              href={buildSignInUrl("/account")}
               className="inline-flex items-center justify-center rounded-full bg-zinc-950 px-6 py-3 text-sm font-semibold text-white hover:bg-zinc-800"
             >
               Sign in
